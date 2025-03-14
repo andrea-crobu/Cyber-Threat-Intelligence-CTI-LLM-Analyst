@@ -37,6 +37,7 @@ The project is divided into three main phases: **Data Preparation**, **Model Tra
    Relations: {list of relations}  
    Diagnosis: {diagnosis}
    ```
+   During training, the expected output is added to the input prompt, to let the model learn the proper sequence of tokens.
 
 2. **Masking Strategy**  
    - Since a **decoder-only model** is used, the input prompt is integrated into the expected output but is **masked** using the special token `-100`.  
