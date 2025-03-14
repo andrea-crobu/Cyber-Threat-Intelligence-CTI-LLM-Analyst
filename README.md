@@ -1,4 +1,4 @@
-# Cyber Threat Intelligence (CTI) Analysis Project
+# Cyber Threat Intelligence (CTI) LLM Analysis
 
 This project focuses on building an AI model capable of performing **Cyber Threat Intelligence (CTI) analysis**. The model is trained to analyze threat reports, extract relevant entities and their relationships, and generate a comprehensive diagnosis of the threat.
 
