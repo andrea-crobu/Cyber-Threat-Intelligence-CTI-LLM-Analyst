@@ -1,0 +1,3 @@
+[submodule "Pipeline"]
+	path = Pipeline
+	url = git@github.com:andrea-crobu/Pipeline.git
