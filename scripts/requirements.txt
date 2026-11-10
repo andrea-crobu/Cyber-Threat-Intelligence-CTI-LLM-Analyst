@@ -1,0 +1,15 @@
+# transformers must come from main: the qwen3_5 architecture this pipeline loads
+# (Qwen/Qwen3.5-4B) is not in a tagged release at the time of writing. The commit below
+# is the one this pipeline was verified against; bump it deliberately.
+transformers @ git+https://github.com/huggingface/transformers.git@04935b4f86ece0b32581331c9f62363129ac9a65
+
+torch>=2.6
+peft>=0.21
+accelerate>=1.0
+datasets>=3.0
+evaluate>=0.4
+rouge_score>=0.1.2
+pandas>=2.2
+numpy>=1.26
+pillow>=10
+pytest>=8
