@@ -126,3 +126,14 @@ def test_load_model_reads_a_local_checkpoint_without_deprecation_noise(tmp_path,
     assert next(model.parameters()).device.type == "cpu"
     assert model.config.use_cache is False
     assert "torch_dtype" not in caplog.text
+
+
+def test_incompatible_transformers_peft_pair_gives_an_actionable_error(monkeypatch):
+    import model_utils
+
+    def broken(model, config):
+        raise RecursionError("maximum recursion depth exceeded")
+
+    monkeypatch.setattr(model_utils, "get_peft_model", broken)
+    with pytest.raises(RuntimeError, match=r"transformers .* peft .*requirements\.txt"):
+        model_utils.wrap_with_lora(object(), RunConfig())

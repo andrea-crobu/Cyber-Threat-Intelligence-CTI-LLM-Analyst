@@ -4,7 +4,9 @@
 transformers @ git+https://github.com/huggingface/transformers.git@04935b4f86ece0b32581331c9f62363129ac9a65
 
 torch>=2.6
-peft>=0.21
+# peft is pinned too: transformers renamed is_gradient_checkpointing to
+# is_activation_checkpointing in Nov 2026 and the two libraries must agree on the name.
+peft @ git+https://github.com/huggingface/peft.git@92bc51b917a21af1eee22d2c3de9c44570354cb4
 accelerate>=1.0
 datasets>=3.0
 evaluate>=0.4

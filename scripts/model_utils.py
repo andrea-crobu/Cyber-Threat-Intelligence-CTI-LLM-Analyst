@@ -76,7 +76,18 @@ def build_lora_config(config: RunConfig) -> LoraConfig:
 
 
 def wrap_with_lora(model, config: RunConfig):
-    return get_peft_model(model, build_lora_config(config))
+    try:
+        return get_peft_model(model, build_lora_config(config))
+    except RecursionError as error:
+        import peft
+        import transformers
+
+        raise RuntimeError(
+            f"transformers {transformers.__version__} and peft {peft.__version__} are "
+            "incompatible (infinite recursion while peft probes activation checkpointing). "
+            "Reinstall the exact pair from requirements.txt: pip install -r scripts/requirements.txt "
+            "--force-reinstall --no-deps transformers peft"
+        ) from error
 
 
 def count_trainable_parameters(model) -> str:
