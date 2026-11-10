@@ -27,6 +27,8 @@ def test_predictions_are_trimmed_to_the_generated_tokens():
     torch = pytest.importorskip("torch")
 
     class FakeModel:
+        device = torch.device("cpu")
+
         def __init__(self, token):
             self.token = token
 
@@ -84,3 +86,33 @@ def test_no_module_named_evaluate_shadows_the_rouge_package():
     scripts_dir = __import__("pathlib").Path(__file__).resolve().parents[1]
     assert not (scripts_dir / "evaluate.py").exists()
     assert hasattr(evaluate_package, "load")
+
+
+def test_generation_inputs_are_placed_on_the_models_device():
+    torch = pytest.importorskip("torch")
+    from evaluate_script import _BaseModelView, _generate_text
+
+    seen = []
+
+    class DeviceModel:
+        device = torch.device("meta")
+
+        def generate(self, input_ids, **kwargs):
+            seen.append(input_ids.device.type)
+            return torch.zeros((1, input_ids.shape[1] + 1), dtype=torch.long)
+
+    class Tok:
+        def decode(self, ids, skip_special_tokens=False):
+            return "x"
+
+    _generate_text(DeviceModel(), Tok(), [1, 2, 3], {})
+    assert seen == ["meta"]
+
+    class FakePeft(DeviceModel):
+        def disable_adapter(self):
+            import contextlib
+
+            return contextlib.nullcontext()
+
+    _generate_text(_BaseModelView(FakePeft()), Tok(), [1, 2, 3], {})
+    assert seen == ["meta", "meta"]

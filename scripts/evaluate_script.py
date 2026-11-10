@@ -77,7 +77,8 @@ def format_rouge_table(scores: dict[str, dict[str, float]]) -> str:
 
 
 def _generate_text(model, tokenizer, input_ids: list[int], kwargs: dict) -> str:
-    output = model.generate(input_ids=torch.tensor([input_ids]), **kwargs)
+    device = model.device
+    output = model.generate(input_ids=torch.tensor([input_ids], device=device), **kwargs)
     continuation = output[0][len(input_ids) :].tolist()
     return tokenizer.decode(continuation, skip_special_tokens=True)
 
@@ -93,6 +94,10 @@ class _BaseModelView:
 
     def __init__(self, peft_model):
         self._peft_model = peft_model
+
+    @property
+    def device(self):
+        return self._peft_model.device
 
     def generate(self, **kwargs):
         with self._peft_model.disable_adapter():

@@ -31,6 +31,11 @@ def build_smoke_batch(prepared: dict) -> dict[str, list[list[int]]]:
     }
 
 
+def move_to_device(batch: dict, device: torch.device) -> dict:
+    """The Trainer does this for train.py; a hand-rolled step has to do it itself."""
+    return {key: value.to(device) for key, value in batch.items()}
+
+
 def run_smoke_test(config: RunConfig) -> dict[str, float]:
     if not config.dataset_path.exists():
         raise FileNotFoundError(
@@ -53,7 +58,7 @@ def run_smoke_test(config: RunConfig) -> dict[str, float]:
     peft_model.train()
 
     start = time.perf_counter()
-    outputs = peft_model(**features)
+    outputs = peft_model(**move_to_device(dict(features), resolve_torch_device(config)))
     outputs.loss.backward()
     optimizer.step()
     optimizer.zero_grad()
