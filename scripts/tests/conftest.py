@@ -92,3 +92,50 @@ def report_frame():
             },
         ]
     )
+
+
+class SavableStubTokenizer(StubTokenizer):
+    """Stub that can also write itself to disk, like a real tokenizer."""
+
+    def save_pretrained(self, directory):
+        import pathlib
+
+        pathlib.Path(directory).mkdir(parents=True, exist_ok=True)
+        (pathlib.Path(directory) / "tokenizer_config.json").write_text("{}")
+
+
+@pytest.fixture
+def tiny_adapter(tmp_path):
+    """A tiny random Qwen3.5 checkpoint plus a LoRA adapter with non-zero weights."""
+    torch = pytest.importorskip("torch")
+    from peft import LoraConfig, get_peft_model
+    from transformers import Qwen3_5Config, Qwen3_5ForConditionalGeneration
+
+    config = Qwen3_5Config(
+        text_config=dict(
+            num_hidden_layers=1, layer_types=["full_attention"], hidden_size=16,
+            num_attention_heads=1, num_key_value_heads=1, head_dim=8, intermediate_size=32,
+            linear_num_key_heads=1, linear_num_value_heads=1, linear_key_head_dim=8,
+            linear_value_head_dim=8, max_position_embeddings=128, mtp_num_hidden_layers=0,
+            vocab_size=1024,
+        ),
+        vision_config=dict(
+            depth=1, hidden_size=16, intermediate_size=16, num_heads=1,
+            out_hidden_size=16, num_position_embeddings=4, patch_size=16,
+        ),
+    )
+    torch.manual_seed(0)
+    base = Qwen3_5ForConditionalGeneration(config)
+    base_dir = tmp_path / "base"
+    base.save_pretrained(base_dir)
+
+    from config import DEFAULT_LORA_TARGET_MODULES
+
+    lora = LoraConfig(
+        r=4, lora_alpha=8, target_modules=DEFAULT_LORA_TARGET_MODULES,
+        init_lora_weights=False, task_type="CAUSAL_LM",
+    )
+    peft_model = get_peft_model(base, lora)
+    adapter_dir = tmp_path / "out" / "peft_model_CTI"
+    peft_model.save_pretrained(adapter_dir)
+    return {"base_dir": base_dir, "adapter_dir": adapter_dir, "out_dir": tmp_path / "out", "peft_model": peft_model}

@@ -27,6 +27,7 @@ python scripts/prepare_dataset.py            # → data/dataset_CTI_qwen3.5-4B.p
 python scripts/smoke_test.py                 # one forward+backward, on real hardware
 python scripts/train.py                      # → outputs/peft_model_CTI/
 python scripts/run_evaluation.py             # → outputs/model_predictions.csv, outputs/rouge_scores.json
+python scripts/merge_adapter.py              # → outputs/merged_model_CTI/ (standalone model, no peft needed)
 ```
 
 Run `smoke_test.py` first on a new machine: it loads the checkpoint, runs one
@@ -52,6 +53,7 @@ Every flag has a default; `--help` on any script lists them all. The common ones
 | `data/dataset_CTI_qwen3.5-4B.pkl` | `prepare_dataset.py` |
 | `outputs/training/` | `train.py` (Trainer output dir) |
 | `outputs/peft_model_CTI/` | `train.py` (adapter + tokenizer) |
+| `outputs/merged_model_CTI/` | `merge_adapter.py` (weights + tokenizer) |
 | `outputs/model_predictions.csv` | `run_evaluation.py` |
 | `outputs/rouge_scores.json` | `run_evaluation.py` |
 
@@ -81,6 +83,18 @@ the notebooks do. The first output token can therefore merge with the prompt's
 trailing newline when a tokenizer sees them together. It is kept for parity with
 the notebooks rather than fixed silently; tightening it would change what the
 loss sees.
+
+## Merging the adapter
+
+`merge_adapter.py` loads the base model, applies `outputs/peft_model_CTI/`, folds the
+LoRA deltas into the weights and saves a plain checkpoint plus the tokenizer. Load it
+with `AutoModelForImageTextToText.from_pretrained("outputs/merged_model_CTI")`.
+
+* It refuses to overwrite an existing merged folder; pass `--overwrite` or `--merged-dirname`.
+* The merge runs in the dtype you pass (`fp32` by default on the Mac, ~16 GB on disk). Add
+  `--dtype fp16` for a half-size file, accepting a small rounding change versus the fp32 merge.
+* Merging bakes the adapter in permanently: keep `outputs/peft_model_CTI/` if you want to
+  retrain or compare against the base model.
 
 ## Apple silicon notes
 
@@ -112,6 +126,7 @@ cti_preprocessing.py prompt building, chat template, entity/relation formatting,
 model_utils.py       device/dtype resolution, tokenizer/model loaders, LoRA
 prepare_dataset.py   phase 1
 train.py             phase 2
+merge_adapter.py     fold the adapter into the base weights
 evaluate_script.py   phase 3 logic; run_evaluation.py is the entry point, named so it
                      cannot shadow the pip `evaluate` package
 smoke_test.py        one forward+backward on new hardware

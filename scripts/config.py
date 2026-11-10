@@ -44,6 +44,7 @@ class RunConfig:
     output_dir: Path = Path("outputs")
     dataset_filename: str = "dataset_CTI_qwen3.5-4B.pkl"
     peft_dirname: str = "peft_model_CTI"
+    merged_dirname: str = "merged_model_CTI"
     predictions_filename: str = "model_predictions.csv"
     rouge_filename: str = "rouge_scores.json"
 
@@ -67,6 +68,7 @@ class RunConfig:
 
     max_new_tokens: int = 400
     skip_rouge: bool = False
+    overwrite: bool = False
     device: str = "auto"
     dtype: str = "auto"
     hf_token_env: str = "HF_TOKEN"
@@ -78,6 +80,10 @@ class RunConfig:
     @property
     def peft_model_path(self) -> Path:
         return self.output_dir / self.peft_dirname
+
+    @property
+    def merged_model_path(self) -> Path:
+        return self.output_dir / self.merged_dirname
 
     @property
     def predictions_path(self) -> Path:
